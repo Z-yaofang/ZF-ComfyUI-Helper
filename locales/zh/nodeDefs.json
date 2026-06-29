@@ -1,0 +1,64 @@
+{
+  "ZFResolutionSelector": {
+    "display_name": "ZF 分辨率选择器",
+    "description": "按比例、参考图、目标边长、目标百万像素和对齐规则输出宽高。只计算尺寸，不缩放图像，不创建 latent。",
+    "inputs": {
+      "aspect_ratio": {
+        "name": "画面比例",
+        "tooltip": "original 使用参考图比例；custom 使用自定义宽高；其他选项为固定比例。"
+      },
+      "custom_width": {
+        "name": "自定义宽",
+        "tooltip": "custom 模式的宽度；original 没有参考图时也会作为备用宽度。"
+      },
+      "custom_height": {
+        "name": "自定义高",
+        "tooltip": "custom 模式的高度；original 没有参考图时也会作为备用高度。"
+      },
+      "scale_mode": {
+        "name": "缩放模式",
+        "tooltip": "none 保持基础尺寸；longest/shortest/width/height 按目标长度计算；megapixels 按目标百万像素计算。"
+      },
+      "target_length": {
+        "name": "目标长度",
+        "tooltip": "用于长边、短边、宽度或高度模式。"
+      },
+      "target_megapixels": {
+        "name": "目标百万像素",
+        "tooltip": "scale_mode 为 megapixels 时使用，按所选比例反推宽高。"
+      },
+      "round_to_multiple": {
+        "name": "对齐倍数",
+        "tooltip": "1 表示不做倍数对齐；8/16 常用于 latent 或 VAE 友好的尺寸。"
+      },
+      "round_mode": {
+        "name": "对齐方式",
+        "tooltip": "nearest 就近对齐，down 向下取整，up 向上取整。"
+      },
+      "image": {
+        "name": "参考图",
+        "tooltip": "可选。aspect_ratio 为 original 时会读取参考图宽高。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "宽度"
+      },
+      "1": {
+        "name": "高度"
+      },
+      "2": {
+        "name": "百万像素"
+      },
+      "3": {
+        "name": "尺寸摘要"
+      },
+      "4": {
+        "name": "参考图宽"
+      },
+      "5": {
+        "name": "参考图高"
+      }
+    }
+  }
+}
