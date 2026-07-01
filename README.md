@@ -47,6 +47,52 @@ Resolution control is useful in far more than one model workflow. Keeping this a
 
 The first node is inspired by practical aspect-ratio selector workflows, but implemented as a clean standalone utility with no external dependencies.
 
+### ZF Load Single Latent
+
+Loads one safetensors-style latent file from a local folder path.
+
+Supported extensions:
+
+- `.latent`
+- `.safetensors`
+- `.sft`
+
+The file name suffix is optional. For example, `001 (1)` resolves to `001 (1).latent`.
+
+Outputs:
+
+- `latent`
+- `file_path`
+
+### ZF Load Latent Folders
+
+Loads latent files from up to 10 local folders. Each folder input has a matching latent-list output.
+
+This is useful when you want to feed latent batches from fixed local paths without using browser upload dialogs or file picker nodes.
+
+### ZF Load Single Tensor Latent
+
+Loads one PyTorch tensor latent from a local folder path.
+
+Supported extensions:
+
+- `.pt`
+- `.pth`
+
+If the file contains a full ComfyUI latent dict with `samples`, it is preserved. If it contains only a tensor, the node wraps it as `{"samples": tensor}`.
+
+### ZF Load Tensor Latent Folders
+
+Loads `.pt` or `.pth` tensor latent files from up to 10 local folders.
+
+Safety note: `.pt` and `.pth` files use PyTorch pickle loading. Only load tensor latent files that you created yourself or fully trust.
+
+### ZH Save Image
+
+Saves PNG images to the normal ComfyUI output directory without writing prompt, workflow, or extra PNG metadata.
+
+It is intentionally named with `ZH` at the front so it is easy to distinguish from ComfyUI's built-in `Save Image` node while keeping similar behavior and output preview.
+
 ## Installation
 
 Clone this repository into your ComfyUI `custom_nodes` directory:
@@ -66,3 +112,4 @@ The default repository language and node definitions are English. A Simplified C
 - This plugin has no model dependency.
 - This plugin does not include workflows yet.
 - The goal is to keep helper nodes small, predictable, and easy to reuse across different ComfyUI workflows.
+- `ZF Load Single Tensor Latent` and `ZF Load Tensor Latent Folders` should only be used with trusted `.pt` / `.pth` files.

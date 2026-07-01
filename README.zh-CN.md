@@ -21,6 +21,28 @@ ComfyUI 输入与基础设置辅助节点。插件和节点统一使用 `ZF` 开
 - 对齐倍数：`1`、`8`、`16`、`32`、`64`、`128`。
 - 对齐方式：就近、向下、向上。
 
+### ZF Load Single Latent
+
+从本地路径加载单个 `.latent`、`.safetensors` 或 `.sft` latent 文件。文件名可以不写后缀。
+
+### ZF Load Latent Folders
+
+从最多 10 个本地文件夹批量加载 latent 文件，每个文件夹对应一个输出。
+
+### ZF Load Single Tensor Latent
+
+从本地路径加载单个 `.pt` 或 `.pth` tensor latent。如果文件里是完整 latent 字典，会保留原结构；如果只有 tensor，会包装成 `{"samples": tensor}`。
+
+### ZF Load Tensor Latent Folders
+
+从最多 10 个本地文件夹批量加载 `.pt` 或 `.pth` tensor latent。
+
+注意：`.pt` / `.pth` 依赖 PyTorch pickle 加载，只加载你自己生成或完全信任的文件。
+
+### ZH Save Image
+
+保存 PNG 图片到 ComfyUI 输出目录，但不写入 prompt、workflow 或其他 PNG 元数据。名字前面用 `ZH`，方便和 ComfyUI 原生 `Save Image` 区分。
+
 ## 安装
 
 放入 ComfyUI 的 `custom_nodes` 目录：

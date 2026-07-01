@@ -60,5 +60,115 @@
         "name": "参考图高"
       }
     }
+  },
+  "LoadLatentFromPath": {
+    "display_name": "ZF 加载单个 Latent",
+    "description": "从本地文件夹加载单个 .latent、.safetensors 或 .sft latent 文件。",
+    "inputs": {
+      "file_name": {
+        "name": "文件名",
+        "tooltip": "文件名可省略后缀，默认自动补 .latent。"
+      },
+      "folder_path": {
+        "name": "文件夹路径",
+        "tooltip": "包含 latent 文件的本地文件夹。"
+      },
+      "wan_has_ref": {
+        "name": "Wan has_ref"
+      },
+      "wan_drop_last": {
+        "name": "Wan drop_last"
+      },
+      "wan_looped": {
+        "name": "Wan looped"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Latent"
+      },
+      "1": {
+        "name": "文件路径"
+      }
+    }
+  },
+  "LoadLatentsFromFolderPath": {
+    "display_name": "ZF 加载 Latent 文件夹",
+    "description": "从最多 10 个本地文件夹批量加载 .latent、.safetensors 或 .sft latent 文件。",
+    "inputs": {
+      "wan_has_ref": {
+        "name": "Wan has_ref"
+      },
+      "wan_drop_last": {
+        "name": "Wan drop_last"
+      },
+      "wan_looped": {
+        "name": "Wan looped"
+      }
+    }
+  },
+  "LoadTensorLatentFromPath": {
+    "display_name": "ZF 加载单个 Tensor Latent",
+    "description": "从本地文件夹加载单个 .pt 或 .pth tensor latent。只加载自己生成或完全信任的文件。",
+    "inputs": {
+      "file_name": {
+        "name": "文件名",
+        "tooltip": "文件名可省略后缀，默认自动补 .pt。"
+      },
+      "folder_path": {
+        "name": "文件夹路径",
+        "tooltip": "包含 tensor latent 文件的本地文件夹。"
+      },
+      "wan_has_ref": {
+        "name": "Wan has_ref"
+      },
+      "wan_drop_last": {
+        "name": "Wan drop_last"
+      },
+      "wan_looped": {
+        "name": "Wan looped"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "Latent"
+      },
+      "1": {
+        "name": "文件路径"
+      }
+    }
+  },
+  "LoadTensorLatentsFromFolderPath": {
+    "display_name": "ZF 加载 Tensor Latent 文件夹",
+    "description": "从最多 10 个本地文件夹批量加载 .pt 或 .pth tensor latent。只加载自己生成或完全信任的文件。",
+    "inputs": {
+      "wan_has_ref": {
+        "name": "Wan has_ref"
+      },
+      "wan_drop_last": {
+        "name": "Wan drop_last"
+      },
+      "wan_looped": {
+        "name": "Wan looped"
+      }
+    }
+  },
+  "ZHSaveImageNoMetadata": {
+    "display_name": "ZH 保存图像",
+    "description": "保存 PNG 图片到 ComfyUI 输出目录，但不写入 prompt、workflow 或其他 PNG 元数据。",
+    "inputs": {
+      "images": {
+        "name": "图像"
+      },
+      "filename_prefix": {
+        "name": "文件名前缀",
+        "tooltip": "保存文件名前缀，支持 ComfyUI 原生文件名格式。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图像"
+      }
+    }
   }
 }
