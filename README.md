@@ -100,6 +100,18 @@ Resolution control is useful in far more than one model workflow. Keeping this a
 
 The first node is inspired by practical aspect-ratio selector workflows, but implemented as a clean standalone utility with no external dependencies.
 
+## Frontend Helpers
+
+### Folder-style combo menus
+
+ComfyUI model lists often contain relative paths such as `Qwen/model.safetensors`. This helper groups path-like combo menus into folder submenus while preserving the original full value when a model is selected.
+
+It is enabled by default and can be toggled in ComfyUI settings:
+
+- `ZF Helper: group path-like combo menus`
+
+The helper skips `ComfyUI-Custom-Scripts` checkpoint and LoRA loader menus because that extension already manages its own tree and preview behavior for those nodes.
+
 ### ZF Load Single Latent
 
 Loads one safetensors-style latent file from a local folder path.
