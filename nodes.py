@@ -5,7 +5,7 @@ import os
 import numpy as np
 import safetensors.torch
 import torch
-from PIL import Image
+from PIL import Image, ImageOps
 
 import folder_paths
 
@@ -41,6 +41,65 @@ SCALE_MODES = [
 
 ROUND_MULTIPLES = ["1", "8", "16", "32", "64", "128"]
 ROUND_MODES = ["nearest", "down", "up"]
+
+EASYSIZE_MODES = ["preset", "custom", "longest_side", "shortest_side"]
+EASYSIZE_SIMPLE_MODES = ["preset", "custom"]
+EASYSIZE_CROP_METHODS = ["center_crop", "stretch"]
+EASYSIZE_RESIZE_ALGOS = ["lanczos", "bilinear", "nearest"]
+EASYSIZE_PRESETS = [
+    ("SD1.5 512x512 (1:1)", 512, 512),
+    ("SD1.5 768x512 (3:2)", 768, 512),
+    ("SD1.5 512x768 (2:3)", 512, 768),
+    ("SD1.5 768x576 (4:3)", 768, 576),
+    ("SD1.5 576x768 (3:4)", 576, 768),
+    ("SDXL 1024x1024 (1:1)", 1024, 1024),
+    ("SDXL 1152x896 (9:7)", 1152, 896),
+    ("SDXL 896x1152 (7:9)", 896, 1152),
+    ("SDXL 1344x768 (7:4)", 1344, 768),
+    ("SDXL 768x1344 (4:7)", 768, 1344),
+    ("SDXL 1216x832 (19:13)", 1216, 832),
+    ("SDXL 832x1216 (13:19)", 832, 1216),
+    ("SDXL 1280x768 (5:3)", 1280, 768),
+    ("SDXL 768x1280 (3:5)", 768, 1280),
+    ("SDXL 1536x640 (12:5)", 1536, 640),
+    ("SDXL 640x1536 (5:12)", 640, 1536),
+    ("SDXL 1600x640 (5:2)", 1600, 640),
+    ("SDXL 640x1600 (2:5)", 640, 1600),
+    ("FLUX 1024x1024 (1:1)", 1024, 1024),
+    ("FLUX 1920x1080 (16:9)", 1920, 1080),
+    ("FLUX 1080x1920 (9:16)", 1080, 1920),
+    ("FLUX 1536x640 (12:5)", 1536, 640),
+    ("FLUX 640x1536 (5:12)", 640, 1536),
+    ("FLUX 1600x1600 (1:1)", 1600, 1600),
+    ("FLUX 1280x720 (16:9)", 1280, 720),
+    ("FLUX 720x1280 (9:16)", 720, 1280),
+    ("FLUX 1366x768 (16:9)", 1366, 768),
+    ("FLUX 768x1366 (9:16)", 768, 1366),
+    ("FLUX 2560x1440 (16:9)", 2560, 1440),
+    ("WAN 832x480 (16:9)", 832, 480),
+    ("WAN 480x832 (9:16)", 480, 832),
+    ("WAN 896x512 (7:4)", 896, 512),
+    ("WAN 512x896 (4:7)", 512, 896),
+    ("WAN 1280x720 (16:9)", 1280, 720),
+    ("WAN 720x1280 (9:16)", 720, 1280),
+    ("WAN 640x480 (4:3)", 640, 480),
+    ("WAN 960x720 (4:3)", 960, 720),
+    ("WAN 480x640 (3:4)", 480, 640),
+    ("WAN 720x960 (3:4)", 720, 960),
+    ("WAN 720x720 (1:1)", 720, 720),
+    ("WAN 480x480 (1:1)", 480, 480),
+    ("WAN 1024x576 (16:9)", 1024, 576),
+    ("WAN 576x1024 (9:16)", 576, 1024),
+    ("QWEN 1328x1328 (1:1)", 1328, 1328),
+    ("QWEN 928x1664 (9:16)", 928, 1664),
+    ("QWEN 1664x928 (16:9)", 1664, 928),
+    ("QWEN 1104x1472 (3:4)", 1104, 1472),
+    ("QWEN 1472x1104 (4:3)", 1472, 1104),
+    ("QWEN 1056x1584 (2:3)", 1056, 1584),
+    ("QWEN 1584x1056 (3:2)", 1584, 1056),
+]
+EASYSIZE_PRESET_NAMES = [item[0] for item in EASYSIZE_PRESETS]
+EASYSIZE_PRESET_LOOKUP = {name: (width, height) for name, width, height in EASYSIZE_PRESETS}
 
 LATENT_EXTENSIONS = (".latent", ".safetensors", ".sft")
 TENSOR_LATENT_EXTENSIONS = (".pt", ".pth")
@@ -128,6 +187,106 @@ def _aspect_text(width, height):
         return "0:0"
     divisor = math.gcd(int(width), int(height))
     return "{}:{}".format(int(width) // divisor, int(height) // divisor)
+
+
+def _mask_size(mask):
+    if mask is None:
+        return 0, 0
+    if len(mask.shape) == 2:
+        return int(mask.shape[1]), int(mask.shape[0])
+    return int(mask.shape[-1]), int(mask.shape[-2])
+
+
+def _easy_base_size(size_mode, preset, width, height, target_length, image=None, mask=None):
+    width = max(1, int(width))
+    height = max(1, int(height))
+
+    if size_mode == "preset":
+        return EASYSIZE_PRESET_LOOKUP.get(preset, (1024, 1024))
+
+    if size_mode == "custom":
+        return width, height
+
+    source_width, source_height = _image_size(image)
+    if source_width <= 0 or source_height <= 0:
+        source_width, source_height = _mask_size(mask)
+    if source_width <= 0 or source_height <= 0:
+        source_width, source_height = width, height
+
+    ratio = source_width / float(max(1, source_height))
+    if size_mode == "longest_side":
+        return _dims_from_longest(ratio, target_length)
+    if size_mode == "shortest_side":
+        return _dims_from_shortest(ratio, target_length)
+    return width, height
+
+
+def _easy_summary(width, height, mode, preset):
+    return "{}x{} | {} | mode={} | preset={}".format(
+        width,
+        height,
+        _aspect_text(width, height),
+        mode,
+        preset if mode == "preset" else "n/a",
+    )
+
+
+def _resample_method(name):
+    if name == "nearest":
+        return Image.Resampling.NEAREST
+    if name == "bilinear":
+        return Image.Resampling.BILINEAR
+    return Image.Resampling.LANCZOS
+
+
+def _resize_pil(image, width, height, crop_method, resize_algorithm):
+    size = (max(1, int(width)), max(1, int(height)))
+    resample = _resample_method(resize_algorithm)
+    if crop_method == "center_crop":
+        return ImageOps.fit(image, size, method=resample)
+    return image.resize(size, resample=resample)
+
+
+def _image_tensor_to_pil(image):
+    array = np.clip(image.detach().cpu().numpy() * 255.0, 0, 255).astype(np.uint8)
+    return Image.fromarray(array)
+
+
+def _pil_to_image_tensor(image):
+    array = np.asarray(image).astype(np.float32) / 255.0
+    return torch.from_numpy(array)
+
+
+def _mask_tensor_to_pil(mask):
+    array = np.clip(mask.detach().cpu().numpy() * 255.0, 0, 255).astype(np.uint8)
+    return Image.fromarray(array, mode="L")
+
+
+def _pil_to_mask_tensor(mask):
+    array = np.asarray(mask).astype(np.float32) / 255.0
+    return torch.from_numpy(array)
+
+
+def _resize_image_batch(images, width, height, crop_method, resize_algorithm):
+    if images is None:
+        return torch.zeros((1, height, width, 3), dtype=torch.float32)
+    resized = [
+        _pil_to_image_tensor(_resize_pil(_image_tensor_to_pil(image), width, height, crop_method, resize_algorithm))
+        for image in images
+    ]
+    return torch.stack(resized, dim=0)
+
+
+def _resize_mask_batch(mask, width, height, crop_method, resize_algorithm):
+    if mask is None:
+        return torch.zeros((1, height, width), dtype=torch.float32)
+    if len(mask.shape) == 2:
+        mask = mask.unsqueeze(0)
+    resized = [
+        _pil_to_mask_tensor(_resize_pil(_mask_tensor_to_pil(item), width, height, crop_method, resize_algorithm))
+        for item in mask
+    ]
+    return torch.stack(resized, dim=0)
 
 
 def _normalize_path(path):
@@ -297,6 +456,105 @@ def _tensor_folder_slot_inputs():
             },
         )
     return inputs
+
+
+class ZFEasySizeImage:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "size_mode": (EASYSIZE_MODES, {"default": "preset"}),
+                "preset": (EASYSIZE_PRESET_NAMES, {"default": "SDXL 1024x1024 (1:1)"}),
+                "width": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
+                "height": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
+                "target_length": ("INT", {
+                    "default": 1024,
+                    "min": 64,
+                    "max": 8192,
+                    "step": 8,
+                    "tooltip": "Used by longest_side and shortest_side modes.",
+                }),
+                "crop_method": (EASYSIZE_CROP_METHODS, {"default": "center_crop"}),
+                "resize_algorithm": (EASYSIZE_RESIZE_ALGOS, {"default": "lanczos"}),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+                "mask": ("MASK",),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT", "STRING")
+    RETURN_NAMES = ("image", "mask", "width", "height", "summary")
+    FUNCTION = "resize"
+    CATEGORY = "ZF Helper/Size"
+    DESCRIPTION = "Resize an image and mask with common model presets, custom size, or target side length."
+    SEARCH_ALIASES = ["ZF EasySize image", "preset image size", "resize image mask"]
+
+    def resize(
+        self,
+        size_mode,
+        preset,
+        width,
+        height,
+        target_length,
+        crop_method,
+        resize_algorithm,
+        image=None,
+        mask=None,
+    ):
+        out_width, out_height = _easy_base_size(size_mode, preset, width, height, target_length, image, mask)
+        out_image = _resize_image_batch(image, out_width, out_height, crop_method, resize_algorithm)
+        out_mask = _resize_mask_batch(mask, out_width, out_height, crop_method, resize_algorithm)
+        return (out_image, out_mask, out_width, out_height, _easy_summary(out_width, out_height, size_mode, preset))
+
+
+class ZFEasySizeLatent:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "size_mode": (EASYSIZE_SIMPLE_MODES, {"default": "preset"}),
+                "preset": (EASYSIZE_PRESET_NAMES, {"default": "SDXL 1024x1024 (1:1)"}),
+                "width": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
+                "height": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "INT", "INT", "STRING")
+    RETURN_NAMES = ("latent", "width", "height", "summary")
+    FUNCTION = "make_latent"
+    CATEGORY = "ZF Helper/Size"
+    DESCRIPTION = "Create an empty latent from a common model preset or custom width and height."
+    SEARCH_ALIASES = ["ZF EasySize latent", "preset latent size", "empty latent preset"]
+
+    def make_latent(self, size_mode, preset, width, height):
+        out_width, out_height = _easy_base_size(size_mode, preset, width, height, 1024)
+        latent = torch.zeros([1, 4, out_height // 8, out_width // 8])
+        return ({"samples": latent}, out_width, out_height, _easy_summary(out_width, out_height, size_mode, preset))
+
+
+class ZFEasySizeSettings:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "size_mode": (EASYSIZE_SIMPLE_MODES, {"default": "preset"}),
+                "preset": (EASYSIZE_PRESET_NAMES, {"default": "SDXL 1024x1024 (1:1)"}),
+                "width": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
+                "height": ("INT", {"default": 1024, "min": 64, "max": 8192, "step": 8}),
+            }
+        }
+
+    RETURN_TYPES = ("INT", "INT", "STRING")
+    RETURN_NAMES = ("width", "height", "summary")
+    FUNCTION = "select_size"
+    CATEGORY = "ZF Helper/Size"
+    DESCRIPTION = "Output width and height from a common model preset or custom size."
+    SEARCH_ALIASES = ["ZF EasySize settings", "preset size settings", "width height preset"]
+
+    def select_size(self, size_mode, preset, width, height):
+        out_width, out_height = _easy_base_size(size_mode, preset, width, height, 1024)
+        return (out_width, out_height, _easy_summary(out_width, out_height, size_mode, preset))
 
 
 class ZFResolutionSelector:
@@ -719,6 +977,9 @@ class ZHSaveImageNoMetadata:
 
 
 NODE_CLASS_MAPPINGS = {
+    "ZFEasySizeImage": ZFEasySizeImage,
+    "ZFEasySizeLatent": ZFEasySizeLatent,
+    "ZFEasySizeSettings": ZFEasySizeSettings,
     "ZFResolutionSelector": ZFResolutionSelector,
     "LoadLatentFromPath": LoadLatentFromPath,
     "LoadLatentsFromFolderPath": LoadLatentsFromFolderPath,
@@ -728,6 +989,9 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "ZFEasySizeImage": "ZF EasySize Image",
+    "ZFEasySizeLatent": "ZF EasySize Latent",
+    "ZFEasySizeSettings": "ZF EasySize Settings",
     "ZFResolutionSelector": "ZF Resolution Selector",
     "LoadLatentFromPath": "ZF Load Single Latent",
     "LoadLatentsFromFolderPath": "ZF Load Latent Folders",

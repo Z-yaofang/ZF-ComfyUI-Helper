@@ -6,6 +6,59 @@ This plugin is intended to be a lightweight toolbox for practical workflow setup
 
 ## Nodes
 
+### ZF EasySize Image
+
+Resizes an optional image and mask using common model size presets, a custom size, or target longest/shortest side length.
+
+Included preset groups:
+
+- SD1.5
+- SDXL
+- FLUX
+- WAN
+- QWEN
+
+Resize modes:
+
+- `preset`: use one of the built-in model size presets.
+- `custom`: use custom width and height.
+- `longest_side`: preserve the input image or mask ratio and set the longest side.
+- `shortest_side`: preserve the input image or mask ratio and set the shortest side.
+
+Crop modes:
+
+- `center_crop`: fill the target size and crop from the center.
+- `stretch`: resize directly to the target size.
+
+Outputs:
+
+- `image`
+- `mask`
+- `width`
+- `height`
+- `summary`
+
+### ZF EasySize Latent
+
+Creates an empty latent from the same EasySize presets or a custom width and height.
+
+Outputs:
+
+- `latent`
+- `width`
+- `height`
+- `summary`
+
+### ZF EasySize Settings
+
+Outputs width and height from the EasySize presets or a custom size without creating image or latent data.
+
+Outputs:
+
+- `width`
+- `height`
+- `summary`
+
 ### ZF Resolution Selector
 
 Calculates width and height from a ratio, optional reference image, target side length, target megapixels, and rounding rules.
