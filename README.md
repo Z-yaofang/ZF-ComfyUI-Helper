@@ -112,6 +112,19 @@ It is enabled by default and can be toggled in ComfyUI settings:
 
 The helper skips `ComfyUI-Custom-Scripts` checkpoint and LoRA loader menus because that extension already manages its own tree and preview behavior for those nodes.
 
+### Workflow drag/drop fallback
+
+Some frontend/plugin combinations can fail to load workflows when dropping files directly onto the canvas. This helper adds a conservative fallback for workflow-like files:
+
+- `.json`
+- `.png`
+- `.webp`
+- `.jpg`
+- `.jpeg`
+- `.svg`
+
+It ignores text fields, buttons, dialogs, and context menus, then passes the dropped file to ComfyUI's built-in `app.handleFile(...)` loader.
+
 ### ZF Load Single Latent
 
 Loads one safetensors-style latent file from a local folder path.
