@@ -159,7 +159,7 @@ function patchContextMenu() {
 		const groupedOptions = {
 			...options,
 			callback: wrappedCallback,
-			autoopen: true,
+			autoopen: false,
 		};
 
 		return new ContextMenu(groupedValues, groupedOptions);
