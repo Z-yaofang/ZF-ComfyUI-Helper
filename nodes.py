@@ -107,6 +107,7 @@ DEFAULT_LATENT_FOLDER = r"C:\Users\94319\Desktop\Latent"
 DEFAULT_LATENT_NAME = "001 (1)"
 DEFAULT_TENSOR_LATENT_NAME = "ComfyPickle_latent_00001"
 MAX_FOLDER_INPUTS = 10
+MAX_TEXT_SWITCH_INPUTS = 32
 
 
 def _image_size(image):
@@ -976,6 +977,73 @@ class ZHSaveImageNoMetadata:
         return {"ui": {"images": results}, "result": (images,)}
 
 
+class ZFMultiTextSwitch:
+    """A front-end driven single-choice text router with deterministic fallback."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        optional = {
+            "text_{}".format(index): (
+                "STRING",
+                {
+                    "forceInput": True,
+                    "tooltip": "Text route {}. Only the selected effective route is returned.".format(index),
+                },
+            )
+            for index in range(1, MAX_TEXT_SWITCH_INPUTS + 1)
+        }
+        return {
+            "required": {
+                "input_count": (
+                    "INT",
+                    {
+                        "default": 4,
+                        "min": 1,
+                        "max": MAX_TEXT_SWITCH_INPUTS,
+                        "step": 1,
+                        "tooltip": "Number of visible text routes (1-32).",
+                    },
+                ),
+                "selected": (
+                    "INT",
+                    {
+                        "default": 1,
+                        "min": 1,
+                        "max": MAX_TEXT_SWITCH_INPUTS,
+                        "step": 1,
+                        "tooltip": "Active route. The node UI stores this value through its route buttons.",
+                    },
+                ),
+            },
+            "optional": optional,
+        }
+
+    RETURN_TYPES = ("STRING", "INT")
+    RETURN_NAMES = ("text", "selected_index")
+    FUNCTION = "select"
+    CATEGORY = "ZF Helper/Text"
+    DESCRIPTION = (
+        "Shows a configurable number of text inputs and routes exactly one of them. "
+        "If the selected route is missing or empty, the first non-empty route from top to bottom is used."
+    )
+    SEARCH_ALIASES = ["ZF multi text switch", "text router", "multi route text", "多路文本切换"]
+
+    def select(self, input_count, selected, **kwargs):
+        count = max(1, min(MAX_TEXT_SWITCH_INPUTS, int(input_count)))
+        requested = max(1, min(count, int(selected)))
+
+        requested_value = str(kwargs.get("text_{}".format(requested), "") or "")
+        if requested_value.strip():
+            return (requested_value, requested)
+
+        for index in range(1, count + 1):
+            value = str(kwargs.get("text_{}".format(index), "") or "")
+            if value.strip():
+                return (value, index)
+
+        return (requested_value, requested)
+
+
 NODE_CLASS_MAPPINGS = {
     "ZFEasySizeImage": ZFEasySizeImage,
     "ZFEasySizeLatent": ZFEasySizeLatent,
@@ -986,6 +1054,7 @@ NODE_CLASS_MAPPINGS = {
     "LoadTensorLatentFromPath": LoadTensorLatentFromPath,
     "LoadTensorLatentsFromFolderPath": LoadTensorLatentsFromFolderPath,
     "ZHSaveImageNoMetadata": ZHSaveImageNoMetadata,
+    "ZFMultiTextSwitch": ZFMultiTextSwitch,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -998,4 +1067,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LoadTensorLatentFromPath": "ZF Load Single Tensor Latent",
     "LoadTensorLatentsFromFolderPath": "ZF Load Tensor Latent Folders",
     "ZHSaveImageNoMetadata": "ZH Save Image",
+    "ZFMultiTextSwitch": "ZF Multi Text Switch",
 }

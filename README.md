@@ -6,6 +6,10 @@ This plugin is intended to be a lightweight toolbox for practical workflow setup
 
 ## Nodes
 
+### ZF Multi Text Switch
+
+Displays 1-32 text inputs according to `input_count` and provides an exclusive route button for each visible input. Reducing the route count moves an invalid selection to the first connected route. At execution time, an empty selected route falls back deterministically to the first non-empty route from top to bottom. The second output reports the route actually used.
+
 ### ZF EasySize Image
 
 Resizes an optional image and mask using common model size presets, a custom size, or target longest/shortest side length.
