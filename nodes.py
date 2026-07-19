@@ -103,7 +103,7 @@ EASYSIZE_PRESET_LOOKUP = {name: (width, height) for name, width, height in EASYS
 
 LATENT_EXTENSIONS = (".latent", ".safetensors", ".sft")
 TENSOR_LATENT_EXTENSIONS = (".pt", ".pth")
-DEFAULT_LATENT_FOLDER = r"C:\Users\94319\Desktop\Latent"
+DEFAULT_LATENT_FOLDER = os.path.join(os.path.expanduser("~"), "Latent")
 DEFAULT_LATENT_NAME = "001 (1)"
 DEFAULT_TENSOR_LATENT_NAME = "ComfyPickle_latent_00001"
 MAX_FOLDER_INPUTS = 10
@@ -1008,10 +1008,10 @@ class ZFMultiTextSwitch:
                     "INT",
                     {
                         "default": 1,
-                        "min": 1,
+                        "min": 0,
                         "max": MAX_TEXT_SWITCH_INPUTS,
                         "step": 1,
-                        "tooltip": "Active route. The node UI stores this value through its route buttons.",
+                        "tooltip": "Active route. 0 is an explicit empty-text output; the node UI stores this value through its route buttons.",
                     },
                 ),
             },
@@ -1030,7 +1030,10 @@ class ZFMultiTextSwitch:
 
     def select(self, input_count, selected, **kwargs):
         count = max(1, min(MAX_TEXT_SWITCH_INPUTS, int(input_count)))
-        requested = max(1, min(count, int(selected)))
+        requested = int(selected)
+        if requested == 0:
+            return ("", 0)
+        requested = max(1, min(count, requested))
 
         requested_value = str(kwargs.get("text_{}".format(requested), "") or "")
         if requested_value.strip():

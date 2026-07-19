@@ -100,7 +100,8 @@ function attachMultiTextSwitch(node) {
 
 	const setSelected = (index) => {
 		const count = clampCount(countWidget.value);
-		selectedWidget.value = Math.max(1, Math.min(count, Number(index) || 1));
+		const requested = Number(index) || 0;
+		selectedWidget.value = requested === 0 ? 0 : Math.max(1, Math.min(count, requested));
 		selectedWidget.callback?.(selectedWidget.value);
 		renderButtons();
 		markChanged();
@@ -108,7 +109,8 @@ function attachMultiTextSwitch(node) {
 
 	const renderButtons = () => {
 		const count = clampCount(countWidget.value);
-		const selected = Math.max(1, Math.min(count, Number(selectedWidget.value) || 1));
+		const rawSelected = Number(selectedWidget.value);
+		const selected = rawSelected === 0 ? 0 : Math.max(1, Math.min(count, rawSelected || 1));
 		buttons.replaceChildren();
 		for (let index = 1; index <= count; index++) {
 			const button = document.createElement("button");
@@ -123,7 +125,20 @@ function attachMultiTextSwitch(node) {
 			});
 			buttons.appendChild(button);
 		}
-		status.textContent = `当前路线 ${selected}；空路线在执行时按从上到下自动回退`;
+		const emptyButton = document.createElement("button");
+		emptyButton.type = "button";
+		emptyButton.textContent = "空文本";
+		emptyButton.title = "显式输出空文本，不回退到其它路线";
+		emptyButton.classList.toggle("active", selected === 0);
+		emptyButton.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			setSelected(0);
+		});
+		buttons.appendChild(emptyButton);
+		status.textContent = selected === 0
+			? "当前路线：空文本；不会回退到其它路线"
+			: `当前路线 ${selected}；空路线在执行时按从上到下自动回退`;
 	};
 
 	const syncInputs = () => {
@@ -146,7 +161,7 @@ function attachMultiTextSwitch(node) {
 		}
 
 		const selected = Number(selectedWidget.value) || 1;
-		if (selected > count || selected < 1) {
+		if (selected > count || selected < 0) {
 			selectedWidget.value = firstLinkedRoute(node, count);
 			selectedWidget.callback?.(selectedWidget.value);
 		}

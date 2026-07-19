@@ -1,5 +1,7 @@
 # ZF-ComfyUI-Helper
 
+[简体中文](README.zh-CN.md)
+
 Small, high-compatibility helper nodes for ComfyUI input and basic workflow settings.
 
 This plugin is intended to be a lightweight toolbox for practical workflow setup tasks: resolution selection, input helpers, shared settings, and other small utility nodes that are useful across many models and workflows. Node names use the `ZF` prefix so they are easy to find in ComfyUI search.
@@ -8,7 +10,7 @@ This plugin is intended to be a lightweight toolbox for practical workflow setup
 
 ### ZF Multi Text Switch
 
-Displays 1-32 text inputs according to `input_count` and provides an exclusive route button for each visible input. Reducing the route count moves an invalid selection to the first connected route. At execution time, an empty selected route falls back deterministically to the first non-empty route from top to bottom. The second output reports the route actually used.
+Displays 1-32 text inputs according to `input_count` and provides an exclusive route button for each visible input. Reducing the route count moves an invalid selection to the first connected route. At execution time, an empty numbered route falls back deterministically to the first non-empty route from top to bottom. The dedicated **Empty Text** button outputs `""` with route index `0` and never triggers fallback. The second output reports the route actually used.
 
 ### ZF EasySize Image
 
